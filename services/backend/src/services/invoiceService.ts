@@ -14,17 +14,29 @@ interface InvoiceRow {
 }
 
 class InvoiceService {
-  static async list( userId: string, status?: string, operator?: string): Promise<Invoice[]> {
+  static async list(
+    userId: string,
+    status?: string,
+    operator?: string
+  ): Promise<Invoice[]> {
     let q = db<InvoiceRow>('invoices').where({ userId: userId });
-    if (status) q = q.andWhereRaw(" status "+ operator + " '"+ status +"'");
+    if (status) {
+      const allowed = new Set(['=', '!=', '<', '>', '<=', '>=']);
+      const op = operator && allowed.has(operator) ? operator : '=';
+      q = q.andWhere('status', op as any, status);
+    }
+
     const rows = await q.select();
-    const invoices = rows.map(row => ({
-      id: row.id,
-      userId: row.userId,
-      amount: row.amount,
-      dueDate: row.dueDate,
-      status: row.status} as Invoice
-    ));
+    const invoices = rows.map(
+      (row) =>
+        ({
+          id: row.id,
+          userId: row.userId,
+          amount: row.amount,
+          dueDate: row.dueDate,
+          status: row.status,
+        } as Invoice)
+    );
     return invoices;
   }
 

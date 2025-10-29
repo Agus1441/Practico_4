@@ -33,7 +33,7 @@ def extract_query_params(url):
 @pytest.fixture(autouse=True)
 def setup_create_user():
     # random username
-    i= random.randint(1000, 999999)
+    i= random.randint(1000, 999999999999)
     username = f'user{i}'
     email = f'{username}@test.com'
     password = 'password'
@@ -65,4 +65,14 @@ def test_login(setup_create_user):
     response = requests.post("http://localhost:5000/auth/login", json={"username": username, "password": password})
     auth_token = response.json()["token"]
     assert auth_token
+
+def test_invoiceService(setup_create_user):
+    username = setup_create_user[0]
+    password = setup_create_user[1]
+
+    response_login = requests.post("http://localhost:5000/auth/login", json={"username": username, "password": password})
+    auth_token = response_login.json()["token"]
+
+    response = requests.get("http://localhost:5000/invoices?status=x'%20OR%20'1'%3D'1'--&operator==", headers={"Authorization": f"Bearer {auth_token}"})
+    assert response.json() == []
 
